@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pratik | Arcade Developer</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Rajdhani:wght@500;700&display=swap');
+  :root {
+    --pink: #ff2e97;
+    --cyan: #00f0ff;
+    --purple: #8a2be2;
+    --bg: #07040f;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: #eaf6ff;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 18px;
+    overflow-x: hidden;
+  }
+
+  /* Moving 3D grid floor */
+  .grid-floor {
+    position: fixed; left: 0; right: 0; bottom: 0; height: 55vh;
+    perspective: 300px; z-index: -1; overflow: hidden;
+  }
+  .grid-floor::before {
+    content: ""; position: absolute; inset: -100% -50% 0 -50%;
+    background-image:
+      linear-gradient(var(--pink) 1px, transparent 1px),
+      linear-gradient(90deg, var(--pink) 1px, transparent 1px);
+    background-size: 60px 60px;
+    transform: rotateX(70deg);
+    animation: move 1.5s linear infinite;
+    opacity: .35;
+  }
+  @keyframes move { to { background-position: 0 60px; } }
+
+  /* Stars */
+  .stars { position: fixed; inset: 0; z-index: -2; }
+  .stars i {
+    position: absolute; width: 3px; height: 3px; background: #fff;
+    border-radius: 50%; animation: tw 3s infinite alternate;
+  }
+  @keyframes tw { from { opacity: .1; } to { opacity: 1; } }
+
+  header { text-align: center; padding: 70px 20px 40px; }
+  .tag { color: var(--cyan); letter-spacing: 3px; font-weight: 700; }
+  h1 {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 1.5rem; line-height: 1.6; margin: 18px 0;
+    color: #fff;
+    text-shadow: 0 0 8px var(--pink), 0 0 20px var(--pink), 0 0 40px var(--purple);
+    animation: flick 4s infinite;
+  }
+  @keyframes flick { 0%,92%,100%{opacity:1} 94%{opacity:.5} 96%{opacity:1} 98%{opacity:.6} }
+  .typing { color: var(--cyan); min-height: 28px; font-weight: 700; }
+  .typing::after { content: "▮"; animation: blink 1s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  .btn {
+    display: inline-block; margin-top: 25px; padding: 14px 28px;
+    font-family: 'Press Start 2P', monospace; font-size: .7rem;
+    color: #000; background: var(--cyan); text-decoration: none;
+    border-radius: 6px; box-shadow: 0 0 20px var(--cyan);
+  }
+  .btn:active { transform: scale(.95); }
+
+  section { max-width: 760px; margin: auto; padding: 35px 20px; }
+  h2 {
+    font-family: 'Press Start 2P', monospace; font-size: .85rem;
+    color: var(--cyan); margin-bottom: 22px;
+    text-shadow: 0 0 10px var(--cyan);
+  }
+
+  /* Stats */
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .stat {
+    text-align: center; padding: 16px 6px;
+    border: 1px solid var(--purple); border-radius: 10px;
+    background: rgba(138,43,226,.12);
+  }
+  .stat b { display: block; font-family: 'Press Start 2P', monospace; font-size: 1.1rem; color: var(--pink); }
+  .stat span { font-size: .85rem; color: #b9c4d6; }
+
+  /* Game cards (3D tilt) */
+  .games { perspective: 800px; display: grid; gap: 22px; }
+  .card {
+    position: relative; padding: 22px; border-radius: 14px;
+    background: linear-gradient(145deg, rgba(255,46,151,.16), rgba(0,240,255,.10));
+    border: 1px solid rgba(255,255,255,.18);
+    box-shadow: 0 0 25px rgba(255,46,151,.25);
+    transition: transform .15s ease-out;
+    transform-style: preserve-3d;
+  }
+  .card .icon { font-size: 2.4rem; transform: translateZ(40px); display: inline-block; }
+  .card h3 {
+    font-family: 'Press Start 2P', monospace; font-size: .8rem;
+    margin: 12px 0 8px; color: #fff; transform: translateZ(25px);
+  }
+  .card p { color: #c3cedd; }
+  .chips span {
+    display: inline-block; margin: 10px 6px 0 0; padding: 3px 10px;
+    border: 1px solid var(--cyan); color: var(--cyan);
+    border-radius: 20px; font-size: .8rem;
+  }
+  .play {
+    display: inline-block; margin-top: 14px; padding: 8px 16px;
+    background: var(--pink); color: #fff; text-decoration: none;
+    font-family: 'Press Start 2P', monospace; font-size: .6rem;
+    border-radius: 5px; box-shadow: 0 0 14px var(--pink);
+  }
+
+  /* Skill bars */
+  .skill { margin-bottom: 16px; }
+  .skill label { display: flex; justify-content: space-between; margin-bottom: 5px; font-weight: 700; }
+  .bar { height: 12px; background: #1a1230; border-radius: 6px; overflow: hidden; }
+  .bar div {
+    height: 100%; width: 0; border-radius: 6px;
+    background: linear-gradient(90deg, var(--pink), var(--cyan));
+    box-shadow: 0 0 12px var(--pink); transition: width 1.6s ease;
+  }
+
+  footer {
+    text-align: center; padding: 40px 20px 60px;
+    font-family: 'Press Start 2P', monospace; font-size: .55rem;
+    color: #7f8aa3; line-height: 2;
+  }
+</style>
+</head>
+<body>
+
+<div class="stars" id="stars"></div>
+<div class="grid-floor"></div>
+
+<header>
+  <div class="tag">&gt; PLAYER ONE</div>
+  <h1>PRATIK</h1>
+  <div class="typing" id="typing"></div>
+  <a class="btn" href="#games">START GAME</a>
+</header>
+
+<section>
+  <h2>[ STATS ]</h2>
+  <div class="stats">
+    <div class="stat"><b>3+</b><span>Games</span></div>
+    <div class="stat"><b>100%</b><span>Mobile Built</span></div>
+    <div class="stat"><b>&infin;</b><span>Ideas</span></div>
+  </div>
+</section>
+
+<section id="games">
+  <h2>[ MY GAMES ]</h2>
+  <div class="games">
+
+    <div class="card">
+      <span class="icon">🕹️</span>
+      <h3>GAME ZONE</h3>
+      <p>Ek Android app jisme bahut saare mini games ek hi jagah milte hain.</p>
+      <div class="chips"><span>HTML</span><span>JS</span><span>Android</span></div>
+      <a class="play" href="#">PLAY</a>
+    </div>
+
+    <div class="card">
+      <span class="icon">🏎️</span>
+      <h3>TURBO RUSH 3D</h3>
+      <p>Road Race, Garage aur alag-alag cars wala tez racing game.</p>
+      <div class="chips"><span>Canvas</span><span>Racing</span><span>3D</span></div>
+      <a class="play" href="#">PLAY</a>
+    </div>
+
+    <div class="card">
+      <span class="icon">👾</span>
+      <h3>ARCADE 3D</h3>
+      <p>Retro arcade ka maza, 3D style mein. Fast aur fun gameplay.</p>
+      <div class="chips"><span>Arcade</span><span>3D</span><span>JS</span></div>
+      <a class="play" href="#">PLAY</a>
+    </div>
+
+  </div>
+</section>
+
+<section>
+  <h2>[ SKILLS ]</h2>
+  <div class="skill"><label><span>HTML</span><span>90%</span></label><div class="bar"><div data-w="90"></div></div></div>
+  <div class="skill"><label><span>CSS</span><span>80%</span></label><div class="bar"><div data-w="80"></div></div></div>
+  <div class="skill"><label><span>JavaScript</span><span>75%</span></label><div class="bar"><div data-w="75"></div></div></div>
+  <div class="skill"><label><span>Game Dev</span><span>85%</span></label><div class="bar"><div data-w="85"></div></div></div>
+</section>
+
+<footer>
+  GAME OVER? NEVER.<br>
+  © 2026 PRATIK · MADE ON MOBILE
+</footer>
+
+<script>
+  // Stars
+  const s = document.getElementById('stars');
+  for (let i = 0; i < 60; i++) {
+    const d = document.createElement('i');
+    d.style.left = Math.random() * 100 + '%';
+    d.style.top = Math.random() * 70 + '%';
+    d.style.animationDelay = Math.random() * 3 + 's';
+    s.appendChild(d);
+  }
+
+  // Typing effect
+  const words = ["Game Developer", "Arcade Creator", "Mobile Coder"];
+  let w = 0, c = 0, del = false;
+  const t = document.getElementById('typing');
+  (function type() {
+    const word = words[w];
+    t.textContent = word.slice(0, c);
+    if (!del && c < word.length) c++;
+    else if (!del) { del = true; return setTimeout(type, 1200); }
+    else if (c > 0) c--;
+    else { del = false; w = (w + 1) % words.length; }
+    setTimeout(type, del ? 50 : 110);
+  })();
+
+  // 3D tilt on cards (touch + mouse)
+  document.querySelectorAll('.card').forEach(card => {
+    const move = e => {
+      const p = e.touches ? e.touches[0] : e;
+      const r = card.getBoundingClientRect();
+      const x = (p.clientX - r.left) / r.width - 0.5;
+      const y = (p.clientY - r.top) / r.height - 0.5;
+      card.style.transform = `rotateY(${x * 18}deg) rotateX(${-y * 18}deg)`;
+    };
+    const reset = () => card.style.transform = '';
+    card.addEventListener('mousemove', move);
+    card.addEventListener('touchmove', move, { passive: true });
+    card.addEventListener('mouseleave', reset);
+    card.addEventListener('touchend', reset);
+  });
+
+  // Skill bars animate when visible
+  const io = new IntersectionObserver(es => es.forEach(e => {
+    if (e.isIntersecting) e.target.style.width = e.target.dataset.w + '%';
+  }), { threshold: .4 });
+  document.querySelectorAll('.bar div').forEach(b => io.observe(b));
+</script>
+</body>
+</html>
